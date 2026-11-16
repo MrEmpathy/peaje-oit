@@ -16,7 +16,7 @@
 // ---------------- CONFIGURACIÓN DE RED Y PEAJE ----------------
 const char* ssid        = "TU_NOMBRE_WIFI";
 const char* password    = "TU_PASSWORD_WIFI";
-const char* mqtt_server = "192.168.1.180";  // IP de la Raspberry Pi
+const char* mqtt_server = "192.168.1.180";  // IP del server
 const int   mqtt_port   = 1883;
 
 // Identificación de esta cabina. GARITA_ID es también el USUARIO MQTT y debe existir en la tabla garitas.
@@ -163,7 +163,7 @@ void conectarWiFi() {
 
 void reconectarMQTT() {
   while (!mqtt.connected()) {
-    Serial.print("[MQTT] Conectando a Raspberry Pi...");
+    Serial.print("[MQTT] Conectando al server...");
     String clientId = String("ESP32_") + GARITA_ID + "_" + CARRIL_ID;
 
     // El broker exige usuario y clave: el usuario es el código de la garita
@@ -245,7 +245,7 @@ long medirDistancia() {
 }
 
 // ============================================================
-// RFID -> ENVÍA UID POR MQTT A LA RASPBERRY PI
+// RFID -> ENVÍA UID POR MQTT AL SERVER
 // ============================================================
 void leerTarjeta() {
   if (!rfid.PICC_IsNewCardPresent()) return;

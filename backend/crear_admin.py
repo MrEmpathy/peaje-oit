@@ -1,6 +1,6 @@
 """Da (o quita) acceso al panel web de administración a una cuenta existente.
 
-La cuenta se crea primero desde la app (Registrarse). Luego, en la Raspberry Pi:
+La cuenta se crea primero desde la app (Registrarse). Luego, en el server:
 
     docker compose exec api_fastapi python crear_admin.py correo@ejemplo.cl
     docker compose exec api_fastapi python crear_admin.py correo@ejemplo.cl --quitar

@@ -40,7 +40,7 @@ Ambos usan el mismo servidor, la misma LCD, servo y sensor ultrasónico, y los m
 | Constante | Valor |
 |---|---|
 | Wi-Fi (`ssid`/`password` o `WIFI_SSID`/`WIFI_PASSWORD`) | Nombre y clave de tu red |
-| Servidor MQTT (`mqtt_server` / `MQTT_SERVER`) | IP de la Raspberry Pi (ej. `192.168.1.191`) |
+| Servidor MQTT (`mqtt_server` / `MQTT_SERVER`) | IP del server (ej. `192.168.1.191`) |
 | `GARITA_ID` | Código de la garita, ej. `garita_norte`. Es **también el usuario MQTT** y debe existir en la tabla `garitas` |
 | `CARRIL_ID` | ej. `carril1` |
 | Clave MQTT (`mqtt_password` / `MQTT_PASSWORD`) | En el `.env` del servidor, `MQTT_DISPOSITIVOS=garita_norte:<clave>` → copiar `<clave>` |
@@ -120,7 +120,7 @@ Comandos por Monitor Serie (todos los firmwares): `A` abrir valla, `C` cerrar, `
 | Síntoma | Solución |
 |---|---|
 | `Error rc=5 (usuario/clave MQTT incorrectos)` | Revisar `GARITA_ID` y la clave MQTT contra `MQTT_DISPOSITIVOS` del `.env` |
-| `Error rc=-2` repetido | IP del servidor incorrecta, o el ESP32 no está en la misma red que la Raspberry Pi |
+| `Error rc=-2` repetido | IP del servidor incorrecta, o el ESP32 no está en la misma red que el server |
 | `ERROR LECTOR NFC` (PN532) | Revisar cables SDA/SCL y los interruptores en modo I2C |
 | La LCD no muestra texto | Cambiar la dirección `0x3F` por `0x27` |
 | `NO REGISTRADA` con una tarjeta conocida | Vincularla con `POST /usuario/tarjetas` |

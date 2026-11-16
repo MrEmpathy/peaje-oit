@@ -22,7 +22,7 @@ dinero. El proyecto automatiza el cobro: el conductor se identifica en la barrer
 |---|---|
 | Celular Android (app Peaje IoT) | Cuenta del usuario, saldo, recargas y medio de pago NFC |
 | ESP32 en la garita | Lector RFID/NFC, servo de la barrera, LCD y sensor ultrasónico (HC-SR04) que detecta el paso del vehículo |
-| Raspberry Pi 5 | Servidor central: API REST, broker MQTT, lógica de cobro y base de datos |
+| Server | Servidor central: API REST, broker MQTT, lógica de cobro y base de datos |
 
 **Objetivo de la comunicación:** que la lectura en la garita llegue al servidor, que este valide al usuario y su saldo,
 cobre la tarifa según el tipo de vehículo y le ordene a la barrera abrir o no, en menos de un segundo; y que el usuario
@@ -60,7 +60,7 @@ vea desde la app su saldo y el resultado de cada paso.
 | FastAPI (Python) | API REST con validación de datos y documentación automática (`/docs`) |
 | **MySQL / MariaDB** | Base de datos de usuarios, credenciales, garitas, tarifas, transacciones y recargas |
 | Eclipse Mosquitto (MQTT) | Mensajería entre las garitas (ESP32) y el servidor |
-| Docker Compose | Despliegue reproducible de broker, API y worker en la Raspberry Pi |
+| Docker Compose | Despliegue reproducible de broker, API y worker en el server |
 | ESP32 (Arduino) + PubSubClient, MFRC522 / PN532, ESP32Servo, LiquidCrystal I2C | Firmware de la garita |
 
 **Justificación del almacenamiento: API externa con MySQL.**
@@ -78,7 +78,7 @@ vea desde la app su saldo y el resultado de cada paso.
 Resumen para validar con el docente:
 
 - **Problemática:** cobro automático de peaje con barrera.
-- **Dispositivos:** app Android, ESP32 con lector y barrera, Raspberry Pi como servidor.
+- **Dispositivos:** app Android, ESP32 con lector y barrera, server central.
 - **Comunicación:** Wi-Fi + HTTP REST (app ↔ servidor), MQTT (ESP32 ↔ servidor), NFC (celular ↔ lector).
 - **Autenticación:** API con MySQL, contraseñas cifradas con bcrypt y sesiones con JWT.
 - **Funcionalidades:** login, saldo, pago NFC, recargas y cuenta.
@@ -239,7 +239,7 @@ y al deslizar hacia abajo, y el resultado del pago aparece en cuanto el servidor
 | Pruebas unitarias de la app (protocolo NFC y mensajes de resultado) | ✅ 10 de 10 |
 | Firmwares del ESP32 (RC522 y PN532) | ✅ Compilan sin advertencias |
 
-Probado en un Samsung Galaxy S26 Ultra con Android 16, contra el servidor real en la Raspberry Pi.
+Probado en un Samsung Galaxy S26 Ultra con Android 16, contra el server real.
 
 ---
 

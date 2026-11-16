@@ -21,7 +21,7 @@ App Android ──HTTP + JWT──► API REST (FastAPI) ──┐
 
 ## Puesta en marcha
 
-### 1. Backend (Raspberry Pi)
+### 1. Backend (server)
 
 ```bash
 cd backend
@@ -36,7 +36,7 @@ docker compose up -d --build
 ### 2. App Android
 
 1. Abrir la carpeta `app/` con Android Studio (*Open*). Genera `local.properties` con la ruta del SDK.
-2. Si el servidor no está en `192.168.1.191`, ver [Si cambia la IP de la Raspberry Pi](#si-cambia-la-ip-de-la-raspberry-pi).
+2. Si el servidor no está en `192.168.1.191`, ver [Si cambia la IP del server](#si-cambia-la-ip-del-server).
 3. Ejecutar en un teléfono conectado a la misma red Wi-Fi que el servidor.
 
 Detalle paso a paso (Android Studio, consola y adb): [Compilar e instalar la app](#compilar-e-instalar-la-app).
@@ -132,11 +132,11 @@ Para ver los registros de la app mientras se usa (útil para el pago NFC):
 & $adb logcat -s PeajeHce okhttp.OkHttpClient AndroidRuntime
 ```
 
-## Si cambia la IP de la Raspberry Pi
+## Si cambia la IP del server
 
 El backend no cambia (escucha en todas sus interfaces). Hay que actualizar **la app** y **el firmware**.
 
-Para saber la IP nueva, en la Raspberry Pi: `hostname -I`.
+Para saber la IP nueva, en el server: `hostname -I`.
 
 ### App (endpoint de la API)
 
@@ -149,7 +149,7 @@ Son dos archivos; en ambos va la misma IP:
    ```
 
 2. **`app/app/src/main/res/xml/network_security_config.xml`** — Android bloquea HTTP sin cifrar;
-   aquí se permite sólo hacia la IP de la Raspberry:
+   aquí se permite sólo hacia la IP del server:
 
    ```xml
    <domain includeSubdomains="false">192.168.1.50</domain>
@@ -176,8 +176,8 @@ En el `.ino` que esté usando el ESP32, cambiar la IP del broker MQTT y volver a
 
 ### Evitar que la IP cambie
 
-Lo más simple es reservar la IP de la Raspberry Pi en el router (*DHCP → reserva de dirección*, asociándola a su MAC;
-la MAC se ve con `ip link` en la Raspberry). Así no hay que recompilar la app ni el firmware.
+Lo más simple es reservar la IP del server en el router (*DHCP → reserva de dirección*, asociándola a su MAC;
+la MAC se ve con `ip link` en el server). Así no hay que recompilar la app ni el firmware.
 
 ## Formas de pago
 

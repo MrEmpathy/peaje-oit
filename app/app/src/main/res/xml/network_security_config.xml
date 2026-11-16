@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Por defecto Android bloquea HTTP sin cifrar. Sólo se permite hacia la Raspberry Pi de la red local.
+<!-- Por defecto Android bloquea HTTP sin cifrar. Sólo se permite hacia el server de la red local.
      Si la API se usa por el túnel HTTPS de Cloudflare, esta excepción deja de ser necesaria. -->
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
