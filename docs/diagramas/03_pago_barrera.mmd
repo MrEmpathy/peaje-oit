@@ -1,0 +1,53 @@
+%% Casos de uso — Pago en la barrera y conexión con el IoT (sección 3.2)
+flowchart LR
+    conductor["👤<br/>Conductor"]
+    esp["📟<br/>ESP32 de la garita<br/>(lector, servo, LCD, HC-SR04)"]
+    worker["⚙️<br/>Worker de cobro<br/>(MQTT + MySQL)"]
+
+    subgraph sistema["Sistema Peaje IoT — barrera"]
+        direction TB
+        nfc(["Pagar con el celular (NFC)"])
+        rfid(["Pagar con tarjeta RFID"])
+        resultado(["Ver resultado del pago<br/>y saldo nuevo en la app"])
+        tokenNfc(["Obtener token de un solo uso<br/>(vigente 5 min, renovación automática)"])
+        cobro(["Procesar cobro del peaje<br/>(lectura publicada por MQTT)"])
+        validarC(["Validar garita, credencial y usuario"])
+        tarifa(["Calcular tarifa por tipo de vehículo"])
+        descontar(["Descontar saldo en transacción atómica"])
+        registrar(["Registrar transacción"])
+        abrir(["Abrir barrera<br/>(orden ABRIR + LCD)"])
+        denegar(["Denegar paso (orden DENEGAR + motivo en LCD)<br/>saldo insuficiente · token reutilizado ·<br/>tarifa no definida · credencial inactiva"])
+        cerrar(["Detectar paso del vehículo<br/>y cerrar barrera"])
+    end
+
+    conductor --- nfc
+    conductor --- rfid
+    conductor --- resultado
+
+    nfc -.->|«include»| tokenNfc
+    nfc -.->|«include»| cobro
+    rfid -.->|«include»| cobro
+    cobro -.->|«include»| validarC
+    cobro -.->|«include»| tarifa
+    cobro -.->|«include»| descontar
+    cobro -.->|«include»| registrar
+    cobro <-.-|«extend»<br/>aprobado| abrir
+    cobro <-.-|«extend»<br/>rechazado| denegar
+    abrir -.->|«include»| cerrar
+
+    nfc --- esp
+    rfid --- esp
+    abrir --- esp
+    denegar --- esp
+    cerrar --- esp
+    cobro --- worker
+
+    classDef actor fill:#fff,stroke:#333,color:#111
+    classDef caso fill:#e8f1fb,stroke:#2b6cb0,color:#111
+    classDef ok fill:#e6f6ec,stroke:#2f855a,color:#111
+    classDef alt fill:#fdecea,stroke:#c53030,color:#111
+    class conductor,esp,worker actor
+    class nfc,rfid,resultado,tokenNfc,cobro,validarC,tarifa,descontar,registrar,cerrar caso
+    class abrir ok
+    class denegar alt
+    style sistema fill:#fafafa,stroke:#555,stroke-width:2px

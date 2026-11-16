@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Peaje IoT</string>
+    <string name="servicio_nfc_descripcion">Pago de peaje con NFC</string>
+    <string name="servicio_nfc_grupo">Peaje IoT</string>
+</resources>

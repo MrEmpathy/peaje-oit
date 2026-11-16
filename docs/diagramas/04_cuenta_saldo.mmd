@@ -1,0 +1,46 @@
+%% Casos de uso — Cuenta, saldo y consulta de datos
+flowchart LR
+    conductor["👤<br/>Conductor"]
+    api["🖥️<br/>API REST<br/>(FastAPI + MySQL)"]
+
+    subgraph app["Sistema Peaje IoT (app Android + API REST)"]
+        direction TB
+        saldo(["Consultar saldo y vehículo<br/>(Inicio, deslizar para actualizar)"])
+        recargar(["Recargar saldo"])
+        monto(["Validar monto<br/>(mínimo, máximo)"])
+        rapido(["Elegir monto rápido<br/>($2.000 a $20.000)"])
+        historial(["Consultar historial de pasos<br/>(solo API)"])
+        recargas(["Consultar historial de recargas<br/>(solo API)"])
+        tarifas(["Consultar tarifas por garita y vehículo<br/>(solo API)"])
+        cuenta(["Ver datos de la cuenta<br/>(nombre, correo, patente, UID NFC)"])
+        vehiculo(["Actualizar vehículo — solo API<br/>(patente y tipo)"])
+        tarjetas(["Gestionar tarjetas RFID — solo API<br/>(agregar, listar, eliminar)"])
+    end
+
+    conductor --- saldo
+    conductor --- recargar
+    conductor --- historial
+    conductor --- recargas
+    conductor --- tarifas
+    conductor --- cuenta
+    conductor --- vehiculo
+    conductor --- tarjetas
+
+    recargar -.->|«include»| monto
+    recargar <-.-|«extend»| rapido
+
+    saldo --- api
+    recargar --- api
+    historial --- api
+    recargas --- api
+    tarifas --- api
+    vehiculo --- api
+    tarjetas --- api
+
+    classDef actor fill:#fff,stroke:#333,color:#111
+    classDef caso fill:#e8f1fb,stroke:#2b6cb0,color:#111
+    classDef api fill:#f1f1f1,stroke:#888,stroke-dasharray:5 4,color:#333
+    class conductor,api actor
+    class saldo,recargar,monto,rapido,cuenta caso
+    class historial,recargas,tarifas,vehiculo,tarjetas api
+    style app fill:#fafafa,stroke:#555,stroke-width:2px

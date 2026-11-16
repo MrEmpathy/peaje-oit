@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Por defecto Android bloquea HTTP sin cifrar. Sólo se permite hacia la Raspberry Pi de la red local.
+     Si la API se usa por el túnel HTTPS de Cloudflare, esta excepción deja de ser necesaria. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">zephyrus.local</domain>
+        <domain includeSubdomains="false">10.135.96.169</domain>
+        <domain includeSubdomains="false">192.168.1.180</domain>
+    </domain-config>
+</network-security-config>

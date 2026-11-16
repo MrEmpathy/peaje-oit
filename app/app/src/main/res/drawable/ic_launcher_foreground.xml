@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Barrera de peaje: poste + brazo con franjas -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- poste -->
+    <path android:fillColor="#FFFFFF" android:pathData="M34,36h8v40h-8z" />
+    <!-- base -->
+    <path android:fillColor="#FFFFFF" android:pathData="M28,74h20v6h-20z" />
+    <!-- brazo -->
+    <path android:fillColor="#FFFFFF" android:pathData="M42,40h40v8h-40z" />
+    <!-- franjas -->
+    <path android:fillColor="#E53935" android:pathData="M50,40h6v8h-6z M62,40h6v8h-6z M74,40h6v8h-6z" />
+    <!-- luz -->
+    <path android:fillColor="#FFC107" android:pathData="M38,30m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+</vector>

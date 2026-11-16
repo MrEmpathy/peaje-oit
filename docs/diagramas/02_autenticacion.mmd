@@ -1,0 +1,49 @@
+%% Casos de uso — Login y autenticación (sección 3.1)
+flowchart LR
+    conductor["👤<br/>Conductor"]
+    api["🖥️<br/>API REST<br/>(FastAPI + MySQL)"]
+
+    subgraph app["Sistema Peaje IoT (app Android + API REST)"]
+        direction TB
+        reg(["Registrarse<br/>(nombre, correo, contraseña, patente, tipo de vehículo)"])
+        login(["Iniciar sesión"])
+        validar(["Validar campos<br/>(vacíos, formato de correo)"])
+        validarReg(["Validar datos del registro<br/>(contraseña ≥ 8 y repetida, patente)"])
+        tipos(["Elegir tipo de vehículo<br/>(GET /tipos-vehiculo)"])
+        bloqueo(["Bloquear 60 s tras<br/>3 intentos fallidos"])
+        verificar(["Verificar credenciales<br/>(hash bcrypt, cuenta activa)"])
+        token(["Recibir y guardar token JWT"])
+        error(["Mostrar mensaje de error<br/>(credenciales, cuenta inactiva,<br/>demasiados intentos, sin conexión)"])
+        mantener(["Mantener la sesión al reabrir la app"])
+        expira(["Cerrar sesión por token expirado (401)"])
+        logout(["Cerrar sesión"])
+        confirmar(["Confirmar cierre de sesión"])
+    end
+
+    conductor --- reg
+    conductor --- login
+    conductor --- mantener
+    conductor --- logout
+
+    reg -.->|«include»| validarReg
+    reg -.->|«include»| tipos
+    reg -.->|«include»| token
+    login -.->|«include»| validar
+    login -.->|«include»| verificar
+    login -.->|«include»| token
+    login <-.-|«extend»| error
+    mantener <-.-|«extend»| expira
+    login <-.-|«extend»<br/>3 fallos| bloqueo
+    logout -.->|«include»| confirmar
+
+    reg --- api
+    verificar --- api
+
+    classDef actor fill:#fff,stroke:#333,color:#111
+    classDef caso fill:#e8f1fb,stroke:#2b6cb0,color:#111
+    classDef api fill:#f1f1f1,stroke:#888,stroke-dasharray:5 4,color:#333
+    classDef alt fill:#fdecea,stroke:#c53030,color:#111
+    class conductor,api actor
+    class reg,validarReg,tipos,login,validar,verificar,token,mantener,logout,confirmar caso
+    class error,expira,bloqueo alt
+    style app fill:#fafafa,stroke:#555,stroke-width:2px

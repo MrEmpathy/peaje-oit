@@ -1,0 +1,43 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.20
+    container_name: peaje_mqtt
+    restart: always
+    network_mode: "host"
+    entrypoint: ["sh", "/mosquitto/entrypoint.sh"]
+    environment:
+      MQTT_WORKER_USER: ${MQTT_WORKER_USER}
+      MQTT_WORKER_PASSWORD: ${MQTT_WORKER_PASSWORD}
+      MQTT_DISPOSITIVOS: ${MQTT_DISPOSITIVOS}
+    volumes:
+      - ./mosquitto/entrypoint.sh:/mosquitto/entrypoint.sh:ro
+      - ./mosquitto/config:/mosquitto/config:ro
+      - mosquitto_data:/mosquitto/data
+
+  api_fastapi:
+    build: .
+    container_name: peaje_api
+    restart: always
+    network_mode: "host"
+    env_file:
+      - .env
+    command: ["uvicorn", "api_peaje:app", "--host", "0.0.0.0", "--port", "8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/salud', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker_mqtt:
+    build: .
+    container_name: peaje_worker
+    restart: always
+    network_mode: "host"
+    env_file:
+      - .env
+    command: ["python", "-u", "worker_mqtt.py"]
+    depends_on:
+      - mosquitto
+
+volumes:
+  mosquitto_data:

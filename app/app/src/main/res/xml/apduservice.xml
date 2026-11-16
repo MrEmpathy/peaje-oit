@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Servicio HCE del peaje. El AID debe coincidir con nfc/ProtocoloApdu.kt y con el firmware del ESP32. -->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/servicio_nfc_descripcion"
+    android:requireDeviceUnlock="true">
+    <aid-group
+        android:category="other"
+        android:description="@string/servicio_nfc_grupo">
+        <aid-filter android:name="F05045414A4501" />
+    </aid-group>
+</host-apdu-service>

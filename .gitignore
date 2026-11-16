@@ -1,0 +1,20 @@
+# --- Secretos (nunca al repositorio) ---
+.env
+local.properties
+*.jks
+*.keystore
+
+# --- Compilación y cachés ---
+build/
+.gradle/
+.kotlin/
+.idea/
+*.iml
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+
+# --- Artefactos exportados (el APK va en GitHub Releases) ---
+/*.zip
+*.apk

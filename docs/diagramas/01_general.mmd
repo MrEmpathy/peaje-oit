@@ -1,0 +1,47 @@
+%% Diagrama de casos de uso general — Peaje IoT
+flowchart LR
+    conductor["👤<br/>Conductor<br/>(usuario de la app)"]
+    lector["📟<br/>ESP32 de la garita<br/>(lector RFID/NFC + barrera)"]
+
+    subgraph sistema["Sistema Peaje IoT"]
+        direction TB
+        uc1(["Registrarse"])
+        uc2(["Iniciar sesión"])
+        uc3(["Consultar saldo y vehículo"])
+        uc4(["Recargar saldo"])
+        uc5(["Pagar peaje con el celular (NFC)"])
+        uc6(["Pagar peaje con tarjeta RFID"])
+        uc7(["Cobrar tarifa según garita y tipo de vehículo"])
+        uc8(["Abrir o denegar la barrera"])
+        uc9(["Consultar historial de pasos y recargas<br/>(solo API)"])
+        uc10(["Gestionar tarjetas RFID<br/>(solo API)"])
+        uc11(["Actualizar vehículo<br/>(solo API)"])
+        uc12(["Cerrar sesión"])
+    end
+
+    conductor --- uc1
+    conductor --- uc2
+    conductor --- uc3
+    conductor --- uc4
+    conductor --- uc5
+    conductor --- uc6
+    conductor --- uc9
+    conductor --- uc10
+    conductor --- uc11
+    conductor --- uc12
+
+    uc5 --- lector
+    uc6 --- lector
+    uc8 --- lector
+
+    uc5 -.->|«include»| uc7
+    uc6 -.->|«include»| uc7
+    uc7 -.->|«include»| uc8
+
+    classDef actor fill:#fff,stroke:#333,stroke-width:1px,color:#111
+    classDef caso fill:#e8f1fb,stroke:#2b6cb0,color:#111
+    classDef api fill:#f1f1f1,stroke:#888,stroke-dasharray:5 4,color:#333
+    class conductor,lector actor
+    class uc1,uc2,uc3,uc4,uc5,uc6,uc7,uc8,uc12 caso
+    class uc9,uc10,uc11 api
+    style sistema fill:#fafafa,stroke:#555,stroke-width:2px
