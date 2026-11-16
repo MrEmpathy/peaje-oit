@@ -1,20 +1,22 @@
 import os
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from decimal import Decimal
+from pathlib import Path
 from typing import Optional
 
 import bcrypt
-import jwt
 import mysql.connector
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+from auth import crear_token_jwt, obtener_usuario_actual
 from common import (
     NFC_TOKEN_TTL,
     TOKEN_NFC_BYTES,
@@ -23,23 +25,15 @@ from common import (
     iniciar_transaccion,
     normalizar_patente,
     normalizar_uid,
-    requerido,
 )
 
 # --- Configuración desde .env ---
-
-JWT_SECRET = requerido("JWT_SECRET")
-if len(JWT_SECRET) < 32:
-    raise RuntimeError("JWT_SECRET debe tener al menos 32 caracteres")
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", 24))
 
 RECARGA_MAXIMA = Decimal(os.getenv("RECARGA_MAXIMA", "100000.00"))
 LIMITE_LOGIN = os.getenv("LIMITE_LOGIN", "5/minute")
 LIMITE_REGISTRO = os.getenv("LIMITE_REGISTRO", "3/minute")
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
 
-security = HTTPBearer()
 limiter = Limiter(key_func=get_remote_address)
 
 
@@ -58,7 +52,7 @@ def generar_uid_unico(cursor) -> str:
 def obtener_datos_usuario(cursor, usuario_id: int):
     cursor.execute(
         """
-        SELECT u.id, u.nombre, u.apellido, u.correo, u.saldo, u.activo, u.patente,
+        SELECT u.id, u.nombre, u.apellido, u.correo, u.saldo, u.activo, u.rol, u.patente,
                tv.codigo AS tipo_vehiculo, tv.nombre AS tipo_vehiculo_nombre,
                (SELECT c.uid FROM credenciales c
                  WHERE c.usuario_id = u.id AND c.tipo = 'VIRTUAL'
@@ -84,6 +78,7 @@ def serializar_usuario(u) -> dict:
         "tipo_vehiculo_nombre": u["tipo_vehiculo_nombre"],
         "saldo": float(u["saldo"]),
         "activo": bool(u["activo"]),
+        "rol": u["rol"],
     }
 
 
@@ -110,30 +105,47 @@ def validar_vehiculo(cursor, patente_raw: str, tipo_codigo: str, usuario_id: Opt
     return patente, tipo["id"]
 
 
-# --- Funciones JWT ---
-
-def crear_token_jwt(usuario_id: int, correo: str) -> str:
-    expiracion = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
-    payload = {"sub": str(usuario_id), "correo": correo, "exp": expiracion}
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-
-def obtener_usuario_actual(credentials: HTTPAuthorizationCredentials = Depends(security)) -> int:
-    """Dependencia que valida el token Bearer y devuelve el ID del usuario autenticado."""
-    try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return int(payload.get("sub"))
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="El token ha expirado, inicia sesión nuevamente")
-    except (jwt.InvalidTokenError, TypeError, ValueError):
-        raise HTTPException(status_code=401, detail="Token de autorización inválido")
-
-
 # --- Inicialización FastAPI ---
 
 app = FastAPI(title="API Peaje Inteligente IoT (JWT)", version="4.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# --- Panel web de administración ---
+# API en /admin/* (sólo cuentas con rol ADMIN) y la página en /panel/ (archivos estáticos).
+from admin_api import router as admin_router  # noqa: E402
+
+app.include_router(admin_router)
+PANEL_DIR = Path(__file__).resolve().parent / "panel"
+app.mount("/panel", StaticFiles(directory=PANEL_DIR, html=True), name="panel")
+
+CABECERAS_PANEL = {
+    # Sólo se cargan scripts, estilos e imágenes del propio servidor: un texto malicioso guardado
+    # en la base (ej. un nombre de usuario) no puede ejecutar código en el navegador del admin.
+    "Content-Security-Policy": (
+        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+        "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+    ),
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+}
+
+
+@app.middleware("http")
+async def cabeceras_seguridad(request: Request, call_next):
+    respuesta = await call_next(request)
+    ruta = request.url.path
+    if ruta.startswith("/panel"):
+        respuesta.headers.update(CABECERAS_PANEL)
+    if ruta.startswith("/admin"):
+        respuesta.headers["Cache-Control"] = "no-store"
+    return respuesta
+
+
+@app.get("/", include_in_schema=False)
+def inicio():
+    return RedirectResponse("/panel/")
 
 # Una app Android nativa no necesita CORS; sólo se habilita si se configura CORS_ORIGINS.
 if CORS_ORIGINS:
@@ -282,7 +294,7 @@ def login(request: Request, credenciales: LoginRequest):
 
         return {
             "mensaje": "Login exitoso",
-            "access_token": crear_token_jwt(usuario["id"], usuario["correo"]),
+            "access_token": crear_token_jwt(usuario["id"], usuario["correo"], usuario["rol"]),
             "token_type": "bearer",
             "usuario": serializar_usuario(usuario),
         }

@@ -37,6 +37,7 @@ CREATE TABLE usuarios (
     tipo_vehiculo_id TINYINT UNSIGNED NOT NULL,
     saldo            DECIMAL(12,2)    NOT NULL DEFAULT 0.00,
     activo           TINYINT(1)       NOT NULL DEFAULT 1,
+    rol              ENUM('USUARIO','ADMIN') NOT NULL DEFAULT 'USUARIO',  -- ADMIN: acceso al panel web
     creado_en        DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en   DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -172,9 +173,48 @@ CREATE TABLE tokens_nfc_usados (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
+-- Ajustes de saldo hechos por un administrador desde el panel (positivos o negativos).
+-- Saldo de un usuario = recargas + ajustes - cobros aprobados.
+-- ---------------------------------------------------------------------
+CREATE TABLE ajustes_saldo (
+    id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    usuario_id      INT UNSIGNED    NOT NULL,
+    admin_id        INT UNSIGNED    NULL,
+    monto           DECIMAL(12,2)   NOT NULL,
+    saldo_anterior  DECIMAL(12,2)   NOT NULL,
+    saldo_nuevo     DECIMAL(12,2)   NOT NULL,
+    motivo          VARCHAR(200)    NOT NULL,
+    fecha_hora      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_ajustes_usuario_fecha (usuario_id, fecha_hora),
+    CONSTRAINT fk_ajustes_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios (id) ON DELETE CASCADE,
+    CONSTRAINT fk_ajustes_admin FOREIGN KEY (admin_id)
+        REFERENCES usuarios (id) ON DELETE SET NULL,
+    CONSTRAINT ck_ajustes_monto CHECK (monto <> 0)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Auditoría del panel de administración: cada acción que modifica algo.
+-- ---------------------------------------------------------------------
+CREATE TABLE auditoria_admin (
+    id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    admin_id    INT UNSIGNED    NULL,
+    accion      VARCHAR(50)     NOT NULL,
+    detalle     VARCHAR(500)    NULL,
+    ip          VARCHAR(45)     NULL,
+    fecha_hora  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_auditoria_fecha (fecha_hora),
+    CONSTRAINT fk_auditoria_admin FOREIGN KEY (admin_id)
+        REFERENCES usuarios (id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
 -- Datos iniciales
 -- Las garitas deben coincidir con los usuarios MQTT de MQTT_DISPOSITIVOS en el .env
 -- Los usuarios se crean desde la app (POST /registro).
+-- Para dar acceso al panel web: python crear_admin.py <correo>
 -- ---------------------------------------------------------------------
 INSERT INTO tipos_vehiculo (codigo, nombre, descripcion, orden) VALUES
     ('MOTO',      'Motocicleta',          'Motos y motonetas',                       1),

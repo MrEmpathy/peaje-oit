@@ -1,0 +1,51 @@
+%% Casos de uso — Administrador (panel web)
+flowchart LR
+    admin["🧑‍💼<br/>Administrador"]
+    esp["📟<br/>ESP32 de la garita"]
+    consola["🖥️<br/>Consola del servidor<br/>(crear_admin.py)"]
+
+    subgraph panel["Panel web de administración (/panel)"]
+        direction TB
+        login(["Iniciar sesión<br/>(rol ADMIN, sesión de 8 h)"])
+        resumen(["Ver resumen<br/>(recaudación, pasos, rechazos)"])
+        pasos(["Consultar pasos por la barrera<br/>(filtros y búsqueda)"])
+        usuarios(["Gestionar usuarios"])
+        ajuste(["Ajustar saldo<br/>(con motivo)"])
+        cuenta(["Activar o desactivar cuenta"])
+        tarjeta(["Bloquear o desbloquear tarjeta"])
+        garitas(["Gestionar garitas"])
+        tarifas(["Definir tarifas<br/>por tipo de vehículo"])
+        abrir(["Abrir barrera manualmente"])
+        auditoria(["Consultar auditoría"])
+        registrar(["Registrar acción en la auditoría"])
+        dar(["Dar o quitar rol de administrador"])
+    end
+
+    admin --- login
+    admin --- resumen
+    admin --- pasos
+    admin --- usuarios
+    admin --- garitas
+    admin --- abrir
+    admin --- auditoria
+
+    usuarios <-.-|«extend»| ajuste
+    usuarios <-.-|«extend»| cuenta
+    usuarios <-.-|«extend»| tarjeta
+    garitas -.->|«include»| tarifas
+    ajuste -.->|«include»| registrar
+    cuenta -.->|«include»| registrar
+    tarjeta -.->|«include»| registrar
+    tarifas -.->|«include»| registrar
+    abrir -.->|«include»| registrar
+
+    abrir --- esp
+    consola --- dar
+
+    classDef actor fill:#fff,stroke:#333,color:#111
+    classDef caso fill:#e8f1fb,stroke:#2b6cb0,color:#111
+    classDef alt fill:#fdecea,stroke:#c53030,color:#111
+    class admin,esp,consola actor
+    class login,resumen,pasos,usuarios,ajuste,cuenta,tarjeta,garitas,tarifas,auditoria,registrar,dar caso
+    class abrir alt
+    style panel fill:#fafafa,stroke:#555,stroke-width:2px

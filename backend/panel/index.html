@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Peaje IoT · Administración</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <!-- Inicio de sesión -->
+  <main id="pantalla-login" class="login" hidden>
+    <form id="form-login" class="login-tarjeta" novalidate>
+      <div class="marca">
+        <span class="marca-logo" aria-hidden="true"></span>
+        <div>
+          <h1>Peaje IoT</h1>
+          <p class="sub">Panel de administración</p>
+        </div>
+      </div>
+      <label class="campo">
+        <span>Correo</span>
+        <input id="login-correo" type="email" autocomplete="username" required>
+      </label>
+      <label class="campo">
+        <span>Contraseña</span>
+        <input id="login-password" type="password" autocomplete="current-password" required>
+      </label>
+      <p id="login-error" class="alerta alerta-error" role="alert" hidden></p>
+      <button id="login-boton" class="boton boton-primario boton-ancho" type="submit">Iniciar sesión</button>
+      <p class="nota">Solo cuentas con rol de administrador. La sesión dura 8 horas y se cierra al cerrar la pestaña.</p>
+    </form>
+  </main>
+
+  <!-- Aplicación -->
+  <div id="pantalla-app" class="app" hidden>
+    <aside class="lateral">
+      <div class="marca marca-chica">
+        <span class="marca-logo" aria-hidden="true"></span>
+        <div>
+          <strong>Peaje IoT</strong>
+          <span class="sub">Administración</span>
+        </div>
+      </div>
+      <nav id="menu" class="menu" aria-label="Secciones">
+        <a href="#/resumen" data-seccion="resumen">Resumen</a>
+        <a href="#/transacciones" data-seccion="transacciones">Pasos por la barrera</a>
+        <a href="#/usuarios" data-seccion="usuarios">Usuarios</a>
+        <a href="#/garitas" data-seccion="garitas">Garitas y tarifas</a>
+        <a href="#/barrera" data-seccion="barrera">Abrir barrera</a>
+        <a href="#/auditoria" data-seccion="auditoria">Auditoría</a>
+      </nav>
+      <div class="sesion">
+        <span id="admin-nombre" class="sesion-nombre"></span>
+        <span id="admin-correo" class="sesion-correo"></span>
+        <button id="boton-salir" class="boton boton-secundario boton-chico" type="button">Cerrar sesión</button>
+      </div>
+    </aside>
+    <main id="vista" class="vista" tabindex="-1"></main>
+  </div>
+
+  <div id="avisos" class="avisos" role="status" aria-live="polite"></div>
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+
+  <dialog id="dialogo" class="dialogo">
+    <form id="dialogo-form" method="dialog" novalidate>
+      <h2 id="dialogo-titulo"></h2>
+      <div id="dialogo-cuerpo"></div>
+      <p id="dialogo-error" class="alerta alerta-error" role="alert" hidden></p>
+      <div class="dialogo-acciones">
+        <button id="dialogo-cancelar" class="boton boton-secundario" type="button">Cancelar</button>
+        <button id="dialogo-aceptar" class="boton boton-primario" type="submit">Aceptar</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

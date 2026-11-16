@@ -5,7 +5,7 @@ Servicios (`docker-compose.yml`, todos con `network_mode: host`):
 | Servicio | Contenedor | Función |
 |---|---|---|
 | `mosquitto` | `peaje_mqtt` | Broker MQTT en el puerto 1883, con usuario/clave y ACL |
-| `api_fastapi` | `peaje_api` | API REST para la app Android (puerto 8000) |
+| `api_fastapi` | `peaje_api` | API REST para la app Android y panel web de administración (puerto 8000) |
 | `worker_mqtt` | `peaje_worker` | Procesa las lecturas de los ESP32 y cobra |
 
 ```bash
@@ -125,3 +125,66 @@ y `tipo_vehiculo_nombre`.
 
 Para vincular una tarjeta física, la app puede leer su UID con el propio NFC del teléfono
 (`Tag.getId()` en modo lector) y enviarlo a `POST /usuario/tarjetas`.
+
+## Panel web de administración
+
+Página web servida por la misma API en **`http://<ip-del-servidor>:8000/panel/`**. Solo entran cuentas
+con rol `ADMIN`.
+
+| Sección | Qué permite |
+|---|---|
+| Resumen | Recaudación y pasos del día, recaudación de los últimos 7 días, rechazos por motivo, actividad por garita (se actualiza cada 20 s) |
+| Pasos por la barrera | Todas las lecturas, con filtros por garita, resultado, fechas y búsqueda por patente, correo o nombre |
+| Usuarios | Buscar usuarios, ver su detalle, **ajustar saldo** (con motivo), activar o desactivar la cuenta y **bloquear tarjetas** perdidas |
+| Garitas y tarifas | Crear, renombrar y desactivar garitas; definir o quitar la tarifa de cada tipo de vehículo |
+| Abrir barrera | Apertura manual (falla del lector, emergencia). Envía `ABRIR` por MQTT; no cobra |
+| Auditoría | Quién hizo cada cambio, cuándo y desde qué IP |
+
+### Activarlo en una instalación existente
+
+```bash
+mysql -u root -p peaje_iot < db/migracion_admin.sql   # agrega rol, ajustes y auditoría; NO borra datos
+docker compose up -d --build                          # reconstruye la API con el panel
+# Registra tu cuenta desde la app y luego dale el rol de administrador:
+docker compose exec api_fastapi python crear_admin.py tu_correo@ejemplo.cl
+```
+
+Para quitar el rol: `python crear_admin.py tu_correo@ejemplo.cl --quitar` (tiene efecto inmediato,
+incluso sobre sesiones abiertas). No existe ningún endpoint para hacerse administrador.
+
+### Seguridad
+
+- El rol se verifica en la base en **cada** petición a `/admin/*`; una cuenta desactivada o sin rol recibe 403.
+- La sesión de administrador dura `ADMIN_JWT_HORAS` (8 h por defecto) y el token se guarda en `sessionStorage`
+  (se borra al cerrar la pestaña).
+- El panel se sirve con `Content-Security-Policy` que solo permite archivos propios, `X-Frame-Options: DENY`
+  y `no-store` en las respuestas de `/admin`. Todo el contenido se inserta como texto (sin `innerHTML`).
+- Los ajustes de saldo son transacciones atómicas (`FOR UPDATE`) y quedan en `ajustes_saldo`; el saldo
+  nunca queda negativo. Saldo = recargas + ajustes − cobros aprobados.
+- Cada cambio queda en `auditoria_admin` dentro de la misma transacción.
+- Si la API se expone por el túnel de Cloudflare, el panel también queda accesible desde internet: usa una
+  contraseña robusta para las cuentas de administrador.
+
+### Endpoints `/admin` (requieren JWT de una cuenta ADMIN)
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/admin/sesion` | Datos del administrador |
+| GET | `/admin/resumen` | Indicadores del día, serie de 7 días, rechazos, garitas, últimos pasos |
+| GET | `/admin/transacciones?garita=&estado=&q=&desde=&hasta=&limite=&offset=` | Pasos con filtros (`estado=RECHAZADO` agrupa todos los rechazos) |
+| GET | `/admin/usuarios?q=&limite=&offset=` | Lista de usuarios |
+| GET | `/admin/usuarios/{id}` | Detalle, credenciales, pasos, recargas y ajustes |
+| PUT | `/admin/usuarios/{id}/estado` | `{"activo": false}` |
+| POST | `/admin/usuarios/{id}/ajuste-saldo` | `{"monto": -1500, "motivo": "Cobro duplicado"}` |
+| PUT | `/admin/credenciales/{id}/estado` | `{"activa": false}` (bloquear tarjeta) |
+| GET | `/admin/garitas` | Garitas con tarifas por tipo y carriles vistos |
+| POST | `/admin/garitas` | `{"codigo": "garita_sur", "nombre": "Garita Sur"}` |
+| PUT | `/admin/garitas/{id}` | `{"nombre": "...", "activa": true}` |
+| PUT | `/admin/tarifas` | `{"garita_id": 1, "tipo_vehiculo": "AUTO", "monto": 900}` (crea o actualiza) |
+| DELETE | `/admin/tarifas/{garita_id}/{tipo}` | Quita la tarifa (ese tipo será rechazado) |
+| POST | `/admin/barrera/abrir` | `{"garita_id": 1, "carril": "carril1", "motivo": "Lector sin conexión"}` |
+| GET | `/admin/auditoria?limite=&offset=` | Registro de acciones |
+
+Una garita nueva necesita además su usuario MQTT en `MQTT_DISPOSITIVOS` del `.env` (mismo código) y
+reiniciar `mosquitto`.
+
