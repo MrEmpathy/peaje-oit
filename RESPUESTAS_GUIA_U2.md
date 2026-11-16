@@ -1,7 +1,7 @@
 # Sumativa Unidad 2 — Aplicaciones Móviles para IoT (TI3042)
 
 **Proyecto:** Peaje IoT — telepeaje con barrera automática, pago con tarjeta RFID o con el celular (NFC)
-**Repositorio:** `<link de GitHub>`
+**Repositorio:** https://github.com/MrEmpathy/peaje-oit
 
 Respuestas en el orden de la guía de aprendizaje. Las capturas están en `docs/capturas/` y el código en
 `app/` (Android), `backend/` (servidor) y `firmware/` (ESP32).
